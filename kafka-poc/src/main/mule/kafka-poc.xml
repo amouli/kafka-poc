@@ -1,0 +1,31 @@
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:kafka="http://www.mulesoft.org/schema/mule/kafka"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/kafka http://www.mulesoft.org/schema/mule/kafka/current/mule-kafka.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<kafka:kafka-producer-config name="Apache_Kafka_Producer_configuration" doc:name="Apache Kafka Producer configuration" doc:id="2509f490-3290-45b4-aa19-5035b696afec" >
+		<kafka:basic-kafka-producer-connection bootstrapServers="${kafka.bootstrap}" />
+	</kafka:kafka-producer-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8cbe77a8-8be8-479f-894a-676707d19326" >
+		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store type="jks" path="keystore/kafkas.jks" alias="${keystroke.alias}" keyPassword="${keystroke.password}" password="${keystroke.password}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<kafka:kafka-consumer-config name="Apache_Kafka_Consumer_configuration" doc:name="Apache Kafka Consumer configuration" doc:id="cc1ebc02-bef6-452d-9691-39439ad16758" >
+		<kafka:basic-kafka-consumer-connection groupId="1" bootstrapServers="localhost:9092" />
+	</kafka:kafka-consumer-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="231d1e0f-a848-4b4a-9b1a-6d4fc15c90e5" file="${env}.properties" />
+	<flow name="Kafka-Publish" doc:id="2cd89e14-d986-40be-b5e3-367184393b3f" initialState="started">
+		<http:listener doc:name="Listener" doc:id="cbe051ac-c545-43c0-9871-470a21bb4179" config-ref="HTTP_Listener_config" path="/producer" allowedMethods="POST"/>
+		<kafka:producer doc:name="Publish Message" doc:id="b03a7e8d-52b1-4b77-808e-b7878f4847ae" config-ref="Apache_Kafka_Producer_configuration" topic="Topic8" key="#[now()]">
+			<kafka:message ><![CDATA[#[message.payload]]]></kafka:message>
+		</kafka:producer>
+	</flow>
+	<flow name="kafka-pocFlow" doc:id="b57897f1-ae44-4af3-8484-8cbb98ae0e46" initialState="started">
+		<kafka:consumer doc:name="Message Consumer" doc:id="838a4edc-09a2-4067-ad76-c56fefca3ad1" config-ref="Apache_Kafka_Consumer_configuration" topic="Topic8"/>
+		<logger level="INFO" doc:name="Logger" doc:id="33f28bd3-6533-40f8-b4ee-ba48702879da" message="#[payload]"/>
+	</flow>
+</mule>
